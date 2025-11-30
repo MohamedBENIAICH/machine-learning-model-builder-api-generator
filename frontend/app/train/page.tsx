@@ -1,7 +1,7 @@
 "use client"
 
-import { ModelWizardEnhanced } from "@/components/model-wizard-enhanced"
+import { ModelWizard } from "@/components/model-wizard"
 
 export default function TrainPage() {
-  return <ModelWizardEnhanced />
+  return <ModelWizard isOpen={true} onOpenChange={() => {}} />
 }

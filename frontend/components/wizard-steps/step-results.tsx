@@ -109,11 +109,11 @@ export function StepResults({ state, onPrev, onNewModel }: StepResultsProps) {
           Nouveau modèle
         </Button>
         <Button
-          onClick={() => alert("Modèle téléchargé!")}
+          onClick={() => window.location.href = 'http://localhost:3000/dashboard'}
           className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md"
         >
           <Download className="w-4 h-4 mr-2" />
-          Télécharger
+          Voir la liste  des modèles
         </Button>
       </div>
     </div>

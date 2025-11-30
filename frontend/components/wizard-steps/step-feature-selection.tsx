@@ -71,6 +71,15 @@ export function StepFeatureSelectionEnhanced({ state, onUpdate, onNext, onPrev }
     }
   }
 
+  interface StepFeatureSelectionProps {
+  state: WizardState
+  onUpdate: (updates: Partial<WizardState>) => void
+  onNext: () => void
+  onPrev: () => void
+  onTrainingStart?: () => void  // Add this
+  onTrainingEnd?: () => void    // Add this
+}
+
   const handleTargetChange = (column: string) => {
     const newInputFeatures = state.inputFeatures.filter((f) => f !== column)
     onUpdate({ outputTarget: column, inputFeatures: newInputFeatures })
@@ -164,10 +173,10 @@ export function StepFeatureSelectionEnhanced({ state, onUpdate, onNext, onPrev }
   return (
     <div className="space-y-6 py-2">
       {/* Progress Header */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h2 className="text-3xl font-bold text-foreground">Sélection des caractéristiques</h2>
+            <h2 className="text-2xl font-semibold text-foreground">Sélection des caractéristiques</h2>
             <p className="text-sm text-muted-foreground">
               Définissez les colonnes d'entrée pour vos prédictions et choisissez votre variable cible
             </p>
@@ -183,7 +192,7 @@ export function StepFeatureSelectionEnhanced({ state, onUpdate, onNext, onPrev }
       </div>
 
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Features Section */}
         <div className="space-y-4 flex flex-col min-h-[600px]">
           <div className="space-y-2">
@@ -317,7 +326,7 @@ export function StepFeatureSelectionEnhanced({ state, onUpdate, onNext, onPrev }
         </div>
 
         {/* Output Target Section */}
-        <div className="space-y-4 flex flex-col min-h-[600px]">
+        <div className="space-y-3 flex flex-col min-h-[450px]">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-blue-500/10 rounded-lg">
