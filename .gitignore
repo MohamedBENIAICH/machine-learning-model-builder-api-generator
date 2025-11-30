@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+.env.*
+.vscode/
+.idea/
+node_modules/
+/frontend/.next
