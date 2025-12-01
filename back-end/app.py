@@ -19,6 +19,12 @@ import json
 import os
 from datetime import datetime
 import pickle
+from flask import g
+import psutil  # Install with: pip install psutil
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Classification algorithms
 from sklearn.linear_model import LogisticRegression
@@ -56,6 +62,10 @@ def before_request():
             db = get_db()
         except Exception as e:
             print(f"Warning: Database initialization may have failed: {e}")
+
+
+# Import the tracking decorator
+from api_statistics import track_api_call, get_api_statistics
 
 
 def robust_read_csv(csv_string: str):
@@ -648,6 +658,7 @@ def delete_model_endpoint(model_id):
 # ==================== PREDICTION ENDPOINTS ====================
 
 @app.route('/<model_name>/predict', methods=['POST'])
+@track_api_call 
 def predict_by_name(model_name):
     """Make predictions using trained model by name"""
     try:
@@ -722,6 +733,7 @@ def _make_prediction(model_info, request):
         return jsonify({'success': False, 'error': f'Prediction error: {str(e)}'}), 400
 
 @app.route('/<model_name>/predict_batch', methods=['POST'])
+@track_api_call
 def batch_predict_by_name(model_name):
     """Make batch predictions using trained model by name"""
     try:
@@ -737,6 +749,42 @@ def batch_predict_by_name(model_name):
 
     except Exception as e:
         return jsonify({'success': False, 'error': f'Batch prediction error: {str(e)}'}), 400
+
+@app.route('/api/models/<int:model_id>/track-copy', methods=['POST'])
+def track_copy(model_id):
+    try:
+        data = request.json
+        section = data.get('section', 'unknown')
+        client_ip = request.remote_addr
+        
+        success = api_statistics.track_code_copy(model_id, section, client_ip)
+        
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to track copy'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/models/<int:model_id>/statistics', methods=['GET'])
+def get_model_statistics(model_id):
+    '''Get API statistics for a model'''
+    try:
+        days = request.args.get('days', default=7, type=int)
+        
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+        
+        stats = get_api_statistics(db, model_id, days)
+        
+        return jsonify({
+            'success': True,
+            'statistics': stats
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 
 @app.route('/api/models/<int:model_id>/predict_batch', methods=['POST'])
 def batch_predict(model_id):

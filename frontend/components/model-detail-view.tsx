@@ -21,6 +21,9 @@ import { ArrowLeft, Download, Trash2, Calendar } from "lucide-react"
 import type { Model } from "@/lib/api"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
+import ApiStatsDashboard from '@/components/api-stats-dashboard'
+import { copyToClipboardWithTracking } from '@/lib/api'
+import { toast } from "@/components/ui/use-toast"
 
 interface ModelDetailViewProps {
   model: Model
@@ -59,6 +62,32 @@ export function ModelDetailView({ model, onBack, onDelete }: ModelDetailViewProp
       setIsDeleting(false)
     }
   }
+
+  const handleCopyCurl = async () => {
+  // Define the curlCode variable with the actual curl command
+  const curlCode = `curl -X POST ${apiBaseUrl}/${model.name}/predict \\
+    -H "Content-Type: application/json" \\
+    -d '${JSON.stringify({ data: exampleInput }, null, 2)}'`
+
+  const success = await copyToClipboardWithTracking(
+    curlCode,
+    model.id,
+    'curl_single_predict'
+  )
+  
+  if (success) {
+    toast({
+      title: "Code copié!",
+      description: "Le code a été copié dans le presse-papier.",
+    })
+  } else {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de copier le code dans le presse-papier.",
+    })
+  }
+}
 
   // Mock comparison data
   const algorithmsComparison = [
@@ -141,9 +170,10 @@ export function ModelDetailView({ model, onBack, onDelete }: ModelDetailViewProp
             <Card className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-4">Métriques</h2>
               <Tabs defaultValue="performance" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="performance">Performance</TabsTrigger>
                   <TabsTrigger value="detailed">Détaillées</TabsTrigger>
+                  <TabsTrigger value="api-stats">Statistiques API</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="performance" className="mt-6 space-y-4">
@@ -233,6 +263,9 @@ export function ModelDetailView({ model, onBack, onDelete }: ModelDetailViewProp
                     )}
                   </div>
                 </TabsContent>
+                <TabsContent value="api-stats">
+                  <ApiStatsDashboard modelId={model.id} modelName={model.name} />
+              </TabsContent>
               </Tabs>
             </Card>
 

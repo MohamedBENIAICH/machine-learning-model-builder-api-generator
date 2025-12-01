@@ -3,6 +3,58 @@
 
 export const API_BASE_URL = "http://localhost:5000/api"
 
+interface EndpointStats {
+  endpoint: string
+  method: string
+  callCount: number
+  successRate: number
+  avgResponseTime: number
+}
+
+interface TimeSeriesData {
+  date: string
+  calls: number
+  successRate: number
+  avgResponseTime: number
+}
+
+interface GeoData {
+  country: string
+  region: string
+  city: string
+  callCount: number
+}
+
+interface ResourceUsage {
+  cpu: number
+  memory: number
+  timestamp: string
+}
+
+interface ClientStats {
+  clientId: string
+  callCount: number
+  lastActive: string
+}
+
+export interface StatusCodeStats {
+  name: string
+  value: number
+}
+
+export interface ApiStatistics {
+  totalCalls: number
+  successfulCalls: number
+  failedCalls: number
+  avgResponseTime: number
+  totalCopiedCount: number
+  endpoints: EndpointStats[]
+  timeSeriesData: TimeSeriesData[]
+  statusCodeDistribution: StatusCodeStats[]
+  resourceUsage: ResourceUsage
+  topClients: ClientStats[]
+}
+
 export interface Model {
   id: string
   name: string
@@ -28,6 +80,54 @@ export interface ApiResponse<T> {
   success: boolean
   data?: T
   error?: string
+}
+
+export const trackCodeCopy = async (modelId: string | number, section: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/models/${modelId}/track-copy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ section })
+    })
+    const data = await response.json()
+    return data.success
+  } catch (error) {
+    console.error('Error tracking code copy:', error)
+    return false
+  }
+}
+
+export const fetchModelStatistics = async (
+  modelId: string,
+  days: number = 7
+): Promise<ApiStatistics | null> => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/models/${modelId}/statistics?days=${days}`
+    )
+    const data = await response.json()
+    return data.statistics || null
+  } catch (error) {
+    console.error("Error fetching model statistics:", error)
+    return null
+  }
+}
+
+export const copyToClipboardWithTracking = async (
+  text: string,
+  modelId: string,
+  section: string
+): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text)
+    await trackCodeCopy(modelId, section)
+    return true
+  } catch (error) {
+    console.error("Error copying to clipboard:", error)
+    return false
+  }
 }
 
 // Health check
@@ -95,3 +195,4 @@ export const updateModel = async (id: string, updates: Partial<Model>): Promise<
     return null
   }
 }
+

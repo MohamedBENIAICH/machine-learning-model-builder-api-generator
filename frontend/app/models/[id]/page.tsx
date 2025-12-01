@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Trash2, Copy, Check, Activity, BarChart3, Zap, Code } from "lucide-react"
-import { fetchModel, deleteModel, type Model } from "@/lib/api"
+import { fetchModel, deleteModel, trackCodeCopy, type Model } from "@/lib/api"
+import ApiStatsDashboard from "@/components/api-stats-dashboard"
 
 export default function ModelDetailPage() {
   const router = useRouter()
@@ -60,6 +61,12 @@ export default function ModelDetailPage() {
     try {
       await navigator.clipboard.writeText(text)
       setCopiedField(fieldName)
+
+      // Track the copy action
+      if (modelId) {
+        trackCodeCopy(modelId, fieldName)
+      }
+
       setTimeout(() => setCopiedField(null), 2000)
     } catch (err) {
       console.error("Failed to copy:", err)
@@ -148,7 +155,7 @@ export default function ModelDetailPage() {
 
         {/* Tabbed interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-md">
+          <TabsList className="grid w-full grid-cols-5 max-w-2xl">
             <TabsTrigger value="general" className="gap-2">
               <Activity className="w-4 h-4" />
               <span className="hidden sm:inline">Infos</span>
@@ -164,6 +171,10 @@ export default function ModelDetailPage() {
             <TabsTrigger value="api" className="gap-2">
               <Code className="w-4 h-4" />
               <span className="hidden sm:inline">API</span>
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Statistiques API</span>
             </TabsTrigger>
           </TabsList>
 
@@ -335,110 +346,110 @@ export default function ModelDetailPage() {
                       <p className="font-mono text-sm break-all text-foreground">
                         {`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict`}
                       </p>
-          </div>
-          <button
-            onClick={() => 
-              handleCopyToClipboard(
-                `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict`,
-                "single-endpoint"
-              )
-            }
-            className="p-2 rounded hover:bg-muted transition-colors flex-shrink-0"
-            title="Copier l'endpoint"
-          >
-            {copiedField === "single-endpoint" ? (
-              <Check className="w-5 h-5 text-green-600" />
-            ) : (
-              <Copy className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-            )}
-          </button>
-        </div>
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleCopyToClipboard(
+                          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict`,
+                          "single-endpoint"
+                        )
+                      }
+                      className="p-2 rounded hover:bg-muted transition-colors flex-shrink-0"
+                      title="Copier l'endpoint"
+                    >
+                      {copiedField === "single-endpoint" ? (
+                        <Check className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Copy className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                      )}
+                    </button>
+                  </div>
 
-        <div className="mt-6">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Exemple de requête (cURL)</p>
-          <div className="relative">
-            <pre className="bg-muted/50 p-4 rounded text-xs overflow-x-auto text-foreground font-mono">
-{`curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {}) }, null, 2)}'`}
-            </pre>
-            <button
-              onClick={() => 
-                handleCopyToClipboard(
-                  `curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {}) })}'`,
-                  "single-curl"
-                )
-              }
-              className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted"
-              title="Copier la commande cURL"
-            >
-              {copiedField === "single-curl" ? (
-                <Check className="w-4 h-4 text-green-600" />
-              ) : (
-                <Copy className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+                  <div className="mt-6">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Exemple de requête (cURL)</p>
+                    <div className="relative">
+                      <pre className="bg-muted/50 p-4 rounded text-xs overflow-x-auto text-foreground font-mono">
+                        {`curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {}) }, null, 2)}'`}
+                      </pre>
+                      <button
+                        onClick={() =>
+                          handleCopyToClipboard(
+                            `curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {}) })}'`,
+                            "single-curl"
+                          )
+                        }
+                        className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted"
+                        title="Copier la commande cURL"
+                      >
+                        {copiedField === "single-curl" ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-      {/* Batch Prediction Endpoint */}
-      <div className="bg-background/50 border border-primary/20 rounded-lg p-4">
-        <p className="text-sm text-muted-foreground mb-3">Endpoint pour les prédictions par lot</p>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <p className="font-mono text-sm break-all text-foreground">
-              {`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch`}
-            </p>
-          </div>
-          <button
-            onClick={() => 
-              handleCopyToClipboard(
-                `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch`,
-                "batch-endpoint"
-              )
-            }
-            className="p-2 rounded hover:bg-muted transition-colors flex-shrink-0"
-            title="Copier l'endpoint"
-          >
-            {copiedField === "batch-endpoint" ? (
-              <Check className="w-5 h-5 text-green-600" />
-            ) : (
-              <Copy className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-            )}
-          </button>
-        </div>
+                {/* Batch Prediction Endpoint */}
+                <div className="bg-background/50 border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground mb-3">Endpoint pour les prédictions par lot</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-sm break-all text-foreground">
+                        {`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleCopyToClipboard(
+                          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch`,
+                          "batch-endpoint"
+                        )
+                      }
+                      className="p-2 rounded hover:bg-muted transition-colors flex-shrink-0"
+                      title="Copier l'endpoint"
+                    >
+                      {copiedField === "batch-endpoint" ? (
+                        <Check className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Copy className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                      )}
+                    </button>
+                  </div>
 
-        <div className="mt-6">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Exemple de requête (cURL)</p>
-          <div className="relative">
-            <pre className="bg-muted/50 p-4 rounded text-xs overflow-x-auto text-foreground font-mono">
-{`curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: [model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {})] }, null, 2)}'`}
-            </pre>
-            <button
-              onClick={() => 
-                handleCopyToClipboard(
-                  `curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: [model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {})] })}'`,
-                  "batch-curl"
-                )
-              }
-              className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted"
-              title="Copier la commande cURL"
-            >
-              {copiedField === "batch-curl" ? (
-                <Check className="w-4 h-4 text-green-600" />
-              ) : (
-                <Copy className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+                  <div className="mt-6">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Exemple de requête (cURL)</p>
+                    <div className="relative">
+                      <pre className="bg-muted/50 p-4 rounded text-xs overflow-x-auto text-foreground font-mono">
+                        {`curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: [model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {})] }, null, 2)}'`}
+                      </pre>
+                      <button
+                        onClick={() =>
+                          handleCopyToClipboard(
+                            `curl -X POST ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/${safeName}/predict_batch \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify({ data: [model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {})] })}'`,
+                            "batch-curl"
+                          )
+                        }
+                        className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted"
+                        title="Copier la commande cURL"
+                      >
+                        {copiedField === "batch-curl" ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-      {/* Python Client Example */}
-      <div className="bg-background/50 border border-primary/20 rounded-lg p-4">
-        <p className="text-sm font-medium text-muted-foreground mb-3">Client Python</p>
-        <div className="relative">
-          <pre className="bg-muted/50 p-4 rounded text-xs overflow-x-auto text-foreground font-mono">
-{`import requests
+                {/* Python Client Example */}
+                <div className="bg-background/50 border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm font-medium text-muted-foreground mb-3">Client Python</p>
+                  <div className="relative">
+                    <pre className="bg-muted/50 p-4 rounded text-xs overflow-x-auto text-foreground font-mono">
+                      {`import requests
 import json
 
 # Configuration
@@ -461,28 +472,33 @@ if response.status_code == 200:
 else:
     print("Erreur:", response.json().get("error", "Erreur inconnue"))
 `}
-          </pre>
-          <button
-            onClick={() => 
-              handleCopyToClipboard(
-                `import requests\nimport json\n\n# Configuration\nAPI_URL = \"${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}\"\nMODEL_NAME = \"${safeName}\"\n\n# Données d'exemple basées sur les caractéristiques du modèle\ninput_data = ${JSON.stringify(model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {}), null, 2)}\n\n# Faire une prédiction\nresponse = requests.post(\n    f\"{API_URL}/{MODEL_NAME}/predict\",\n    headers={\"Content-Type\": \"application/json\"},\n    json={\"data\": input_data}\n)\n\nif response.status_code == 200:\n    result = response.json()\n    print(\"Prédiction:\", result[\"prediction\"])\nelse:\n    print(\"Erreur:\", response.json().get(\"error\", \"Erreur inconnue\"))`,
-                "python-client"
-              )
-            }
-            className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted"
-            title="Copier le code Python"
-          >
-            {copiedField === "python-client" ? (
-              <Check className="w-4 h-4 text-green-600" />
-            ) : (
-              <Copy className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  </Card>
-</TabsContent>
+                    </pre>
+                    <button
+                      onClick={() =>
+                        handleCopyToClipboard(
+                          `import requests\nimport json\n\n# Configuration\nAPI_URL = \"${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}\"\nMODEL_NAME = \"${safeName}\"\n\n# Données d'exemple basées sur les caractéristiques du modèle\ninput_data = ${JSON.stringify(model.input_features?.reduce((acc, feature) => ({ ...acc, [feature]: 0 }), {}), null, 2)}\n\n# Faire une prédiction\nresponse = requests.post(\n    f\"{API_URL}/{MODEL_NAME}/predict\",\n    headers={\"Content-Type\": \"application/json\"},\n    json={\"data\": input_data}\n)\n\nif response.status_code == 200:\n    result = response.json()\n    print(\"Prédiction:\", result[\"prediction\"])\nelse:\n    print(\"Erreur:\", response.json().get(\"error\", \"Erreur inconnue\"))`,
+                          "python-client"
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted"
+                      title="Copier le code Python"
+                    >
+                      {copiedField === "python-client" ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* API Stats Tab */}
+          <TabsContent value="stats" className="space-y-4">
+            <ApiStatsDashboard modelId={modelId} modelName={model.name} />
+          </TabsContent>
         </Tabs>
 
         {/* Actions */}
@@ -493,6 +509,7 @@ else:
           </Button>
         </div>
       </main>
-    </div>
+    </div >
+
   )
 }

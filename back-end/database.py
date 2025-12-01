@@ -8,6 +8,8 @@ import os
 from datetime import datetime
 from typing import Optional, List, Dict
 import config
+# from database import get_db
+from api_statistics import create_api_stats_tables
 
 class DatabaseManager:
     """Handles all database operations for ML models"""
@@ -358,3 +360,6 @@ def get_db():
     if db_manager is None:
         init_db()
     return db_manager
+
+db = get_db()
+create_api_stats_tables(db.connection)
