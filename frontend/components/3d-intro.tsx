@@ -225,11 +225,22 @@ function AdvancedNeuralNetworkLines() {
 }
 
 import React from "react"
+import { fetchDashboardStats, type DashboardStats } from "@/lib/api"
 
 export function Intro3D({ onComplete }: { onComplete: () => void }) {
   const [displayText, setDisplayText] = useState("")
   const [showStats, setShowStats] = useState(false)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
   const text = "ML Model Manager"
+
+  useEffect(() => {
+    // Fetch dashboard stats on mount
+    const loadStats = async () => {
+      const data = await fetchDashboardStats()
+      setStats(data)
+    }
+    loadStats()
+  }, [])
 
   useEffect(() => {
     let index = 0
@@ -246,6 +257,14 @@ export function Intro3D({ onComplete }: { onComplete: () => void }) {
 
     return () => clearInterval(interval)
   }, [onComplete])
+
+  // Use real stats or fallback to defaults
+  const displayStats = stats || {
+    totalModels: 0,
+    classificationCount: 0,
+    regressionCount: 0,
+    avgAccuracy: 0
+  }
 
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center relative overflow-hidden">
@@ -275,10 +294,10 @@ export function Intro3D({ onComplete }: { onComplete: () => void }) {
         {showStats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl w-full mb-8 animate-fadeIn">
             {[
-              { label: "Models", value: "2,450+", icon: "🤖", delay: 0 },
-              { label: "Accuracy", value: "94.2%", icon: "📊", delay: 150 },
-              { label: "Datasets", value: "1,200+", icon: "📦", delay: 300 },
-              { label: "Users", value: "3,850+", icon: "👥", delay: 450 },
+              { label: "Modèles totaux", value: displayStats.totalModels.toString(), icon: "🤖", delay: 0 },
+              { label: "Classification", value: displayStats.classificationCount.toString(), icon: "📊", delay: 150 },
+              { label: "Régression", value: displayStats.regressionCount.toString(), icon: "📈", delay: 300 },
+              { label: "Précision moyenne", value: `${displayStats.avgAccuracy}%`, icon: "✨", delay: 450 },
             ].map((stat, idx) => (
               <div
                 key={idx}
@@ -321,3 +340,4 @@ export function Intro3D({ onComplete }: { onComplete: () => void }) {
     </div>
   )
 }
+

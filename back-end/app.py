@@ -842,7 +842,48 @@ def _make_batch_prediction(model_info, request):
 
 # ==================== UTILITY ENDPOINTS ====================
 
+
+@app.route('/api/dashboard/stats', methods=['GET'])
+def get_dashboard_stats():
+    """Get dashboard statistics for landing page"""
+    try:
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+        
+        cursor = db.connection.cursor(dictionary=True)
+        
+        # Get total model count and breakdown by type
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_models,
+                SUM(CASE WHEN model_type = 'classification' THEN 1 ELSE 0 END) as classification_count,
+                SUM(CASE WHEN model_type = 'regression' THEN 1 ELSE 0 END) as regression_count,
+                AVG(accuracy) as avg_accuracy
+            FROM models
+        """)
+        
+        result = cursor.fetchone()
+        cursor.close()
+        
+        stats = {
+            'totalModels': result['total_models'] or 0,
+            'classificationCount': result['classification_count'] or 0,
+            'regressionCount': result['regression_count'] or 0,
+            'avgAccuracy': round(float(result['avg_accuracy'] or 0) * 100, 1)  # Convert to percentage
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting dashboard stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/parse-csv', methods=['POST'])
+
 def parse_csv():
     """Parse CSV and return column information"""
     try:

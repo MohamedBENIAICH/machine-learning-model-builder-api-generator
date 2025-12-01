@@ -82,6 +82,25 @@ export interface ApiResponse<T> {
   error?: string
 }
 
+export interface DashboardStats {
+  totalModels: number
+  classificationCount: number
+  regressionCount: number
+  avgAccuracy: number
+}
+
+export const fetchDashboardStats = async (): Promise<DashboardStats | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/dashboard/stats`)
+    const data = await response.json()
+    return data.stats || null
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error)
+    return null
+  }
+}
+
+
 export const trackCodeCopy = async (modelId: string | number, section: string): Promise<boolean> => {
   try {
     const response = await fetch(`${API_BASE_URL}/models/${modelId}/track-copy`, {
