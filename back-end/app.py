@@ -850,7 +850,7 @@ def get_dashboard_stats():
         if not db:
             return jsonify({'success': False, 'error': 'Database not available'}), 500
         
-        cursor = db.connection.cursor(dictionary=True)
+        cursor = db.connection.cursor(dictionary=True, buffered=True)
         
         # Get total model count and breakdown by type
         cursor.execute("""

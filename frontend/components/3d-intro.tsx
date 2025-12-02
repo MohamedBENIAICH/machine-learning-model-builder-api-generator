@@ -3,14 +3,15 @@
 import { useState, useEffect, useRef } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { PerspectiveCamera } from "@react-three/drei"
+import * as THREE from "three"
 
 function AdvancedAnimatedScene() {
-  const groupRef = useRef(null)
-  const torusRef = useRef(null)
-  const spheresRef = useRef([])
-  const particlesRef = useRef(null)
-  const coresRef = useRef([])
-  const waveRef = useRef(null)
+  const groupRef = useRef<THREE.Group>(null)
+  const torusRef = useRef<THREE.Mesh>(null)
+  const spheresRef = useRef<THREE.Mesh[]>([])
+  const particlesRef = useRef<THREE.Points>(null)
+  const coresRef = useRef<THREE.Mesh[]>([])
+  const waveRef = useRef<THREE.Mesh>(null)
 
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime()
@@ -156,7 +157,7 @@ function AdvancedAnimatedScene() {
 }
 
 const AdvancedParticleSystem = React.forwardRef(function ParticleSystem(props: any, ref: any) {
-  const pointsRef = useRef(null)
+  const pointsRef = useRef<THREE.Points>(null)
 
   const particleCount = 2500
   const positions = new Float32Array(particleCount * 3)
@@ -172,7 +173,7 @@ const AdvancedParticleSystem = React.forwardRef(function ParticleSystem(props: a
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" array={positions} count={particleCount} itemSize={3} />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={particleCount} itemSize={3} />
       </bufferGeometry>
       <pointsMaterial size={0.08} color="#6366f1" sizeAttenuation transparent opacity={0.7} />
     </points>
@@ -180,7 +181,7 @@ const AdvancedParticleSystem = React.forwardRef(function ParticleSystem(props: a
 })
 
 function AdvancedNeuralNetworkLines() {
-  const lineRef = useRef(null)
+  const lineRef = useRef<THREE.Group>(null)
 
   useFrame(() => {
     if (lineRef.current) {
@@ -211,7 +212,7 @@ function AdvancedNeuralNetworkLines() {
             <bufferGeometry>
               <bufferAttribute
                 attach="attributes-position"
-                array={new Float32Array([...pos1, ...pos2])}
+                args={[new Float32Array([...pos1, ...pos2]), 3]}
                 count={2}
                 itemSize={3}
               />

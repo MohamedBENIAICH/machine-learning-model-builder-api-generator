@@ -12,26 +12,39 @@ import config
 from api_statistics import create_api_stats_tables
 
 class DatabaseManager:
-    """Handles all database operations for ML models"""
+    """Handles all database operations for ML models with connection pooling"""
     
     def __init__(self):
-        self.connection = None
+        self.pool = None
+        self.connection = None  # For backward compatibility with create_tables
         self.connect()
     
     def connect(self):
-        """Establish connection to MySQL database"""
+        """Establish connection pool to MySQL database"""
         try:
-            self.connection = mysql.connector.connect(
+            from mysql.connector import pooling
+            self.pool = pooling.MySQLConnectionPool(
+                pool_name="ml_model_pool",
+                pool_size=10,  # Number of connections in the pool
+                pool_reset_session=True,
                 host=config.DB_HOST,
                 user=config.DB_USER,
                 password=config.DB_PASSWORD,
                 database=config.DB_NAME,
                 port=config.DB_PORT
             )
-            print("✓ Database connection established")
+            # Get a connection for initialization (create_tables)
+            self.connection = self.pool.get_connection()
+            print("✓ Database connection pool established")
         except Error as e:
             print(f"✗ Error connecting to database: {e}")
             raise
+    
+    def get_connection(self):
+        """Get a connection from the pool"""
+        if self.pool:
+            return self.pool.get_connection()
+        return None
     
     def disconnect(self):
         """Close database connection"""
@@ -41,7 +54,7 @@ class DatabaseManager:
     
     def create_tables(self):
         """Create necessary tables if they don't exist"""
-        cursor = self.connection.cursor()
+        cursor = self.connection.cursor(buffered=True)
         
         try:
             # Models table
@@ -111,7 +124,7 @@ class DatabaseManager:
         
         Returns: model_id if successful, None otherwise
         """
-        cursor = self.connection.cursor()
+        cursor = self.connection.cursor(buffered=True)
         
         try:
             # Determine accuracy/score value
@@ -162,7 +175,7 @@ class DatabaseManager:
     def save_training_result(self, model_id: int, algorithm_name: str,
                             metrics: Dict, score: float):
         """Save individual algorithm training result"""
-        cursor = self.connection.cursor()
+        cursor = self.connection.cursor(buffered=True)
         
         try:
             query = """
@@ -179,7 +192,11 @@ class DatabaseManager:
     
     def get_model(self, model_id: int) -> Optional[Dict]:
         """Retrieve model information from database"""
-        cursor = self.connection.cursor(dictionary=True)
+        conn = self.get_connection()
+        if not conn:
+            return None
+        
+        cursor = conn.cursor(dictionary=True, buffered=True)
         
         try:
             query = "SELECT * FROM models WHERE id = %s"
@@ -197,10 +214,15 @@ class DatabaseManager:
             return None
         finally:
             cursor.close()
+            conn.close()
     
     def get_all_models(self, limit: int = 100, offset: int = 0) -> List[Dict]:
         """Retrieve all models with pagination"""
-        cursor = self.connection.cursor(dictionary=True)
+        conn = self.get_connection()
+        if not conn:
+            return []
+        
+        cursor = conn.cursor(dictionary=True, buffered=True)
         
         try:
             query = """
@@ -218,10 +240,15 @@ class DatabaseManager:
             return []
         finally:
             cursor.close()
+            conn.close()
     
     def get_model_count(self) -> int:
         """Get total count of models"""
-        cursor = self.connection.cursor()
+        conn = self.get_connection()
+        if not conn:
+            return 0
+        
+        cursor = conn.cursor(buffered=True)
         
         try:
             query = "SELECT COUNT(*) as count FROM models"
@@ -233,10 +260,15 @@ class DatabaseManager:
             return 0
         finally:
             cursor.close()
+            conn.close()
     
     def get_training_results(self, model_id: int) -> List[Dict]:
         """Get all training results for a specific model"""
-        cursor = self.connection.cursor(dictionary=True)
+        conn = self.get_connection()
+        if not conn:
+            return []
+        
+        cursor = conn.cursor(dictionary=True, buffered=True)
         
         try:
             query = """
@@ -257,10 +289,11 @@ class DatabaseManager:
             return []
         finally:
             cursor.close()
+            conn.close()
     
     def save_prediction(self, model_id: int, input_data: Dict, prediction: Dict):
         """Save prediction history"""
-        cursor = self.connection.cursor()
+        cursor = self.connection.cursor(buffered=True)
         
         try:
             query = """
@@ -278,7 +311,7 @@ class DatabaseManager:
     
     def delete_model(self, model_id: int) -> bool:
         """Delete a model and its associated data"""
-        cursor = self.connection.cursor()
+        cursor = self.connection.cursor(buffered=True)
         
         try:
             # Get model file path
@@ -311,7 +344,7 @@ class DatabaseManager:
     
     def update_model(self, model_id: int, **kwargs) -> bool:
         """Update model information"""
-        cursor = self.connection.cursor()
+        cursor = self.connection.cursor(buffered=True)
         
         try:
             allowed_fields = ['model_name', 'description']
@@ -337,7 +370,7 @@ class DatabaseManager:
 
     def get_model_by_name(self, model_name):
         """Get model by name from database"""
-        cursor = self.conn.cursor(dictionary=True)
+        cursor = self.conn.cursor(dictionary=True, buffered=True)
         query = "SELECT * FROM models WHERE name = %s"
         cursor.execute(query, (model_name,))
         model = cursor.fetchone()

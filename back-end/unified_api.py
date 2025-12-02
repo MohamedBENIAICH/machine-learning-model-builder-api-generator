@@ -100,7 +100,7 @@ def track_api_call(endpoint, method, status_code, response_time_ms, model_id=Non
         
         db = get_db()
         if db and db.connection:
-            cursor = db.connection.cursor()
+            cursor = db.connection.cursor(buffered=True)
             query = """
                 INSERT INTO api_stats 
                 (endpoint, method, status_code, response_time_ms, model_id, client_ip, cpu_percent, memory_usage_mb)

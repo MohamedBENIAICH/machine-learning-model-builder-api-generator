@@ -9,7 +9,7 @@ import os
 
 def create_api_stats_tables(connection):
     """Create table for tracking API calls if it doesn't exist"""
-    cursor = connection.cursor()
+    cursor = connection.cursor(buffered=True)
     try:
         # Create table if not exists
         cursor.execute("""
@@ -91,7 +91,7 @@ def track_api_call(func):
             from database import get_db
             db = get_db()
             if db and db.connection:
-                cursor = db.connection.cursor()
+                cursor = db.connection.cursor(buffered=True)
                 query = """
                     INSERT INTO api_stats 
                     (endpoint, method, status_code, response_time_ms, model_id, client_ip, cpu_percent, memory_usage_mb)
@@ -117,7 +117,7 @@ def track_api_call(func):
 
 def get_api_statistics(db_manager, model_id=None, days=7):
     """Get detailed API statistics"""
-    cursor = db_manager.connection.cursor(dictionary=True)
+    cursor = db_manager.connection.cursor(dictionary=True, buffered=True)
     stats = {
         'totalCalls': 0,
         'successfulCalls': 0,
@@ -323,7 +323,7 @@ def track_code_copy(model_id, section, client_ip=None):
         from database import get_db
         db = get_db()
         if db and db.connection:
-            cursor = db.connection.cursor()
+            cursor = db.connection.cursor(buffered=True)
             query = """
                 INSERT INTO code_copies 
                 (model_id, section, client_id)
