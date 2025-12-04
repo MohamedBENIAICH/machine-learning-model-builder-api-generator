@@ -57,12 +57,6 @@
 
 The API will be available at `http://localhost:5000`
 
-## 📚 Documentation
-
-- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - Complete API reference with examples
-- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - Detailed setup and configuration guide
-- **[example_client.py](./example_client.py)** - Python client example with full workflow
-
 ## 🔌 API Endpoints Overview
 
 ### Training
@@ -196,77 +190,9 @@ curl -X POST http://localhost:5000/api/train \
     "output_feature": "target"
   }'
 ```
-
-### 3. Get Predictions
-```bash
-curl -X POST http://localhost:5000/api/models/1/predict \
-  -H "Content-Type: application/json" \
-  -d '{"data": {"age": 30, "income": 50000}}'
 ```
 
-## 🔐 Security Best Practices
-
-- Change `SECRET_KEY` in production
-- Use environment variables for credentials
-- Implement authentication/authorization
-- Validate all user inputs
-- Use HTTPS in production
-- Implement rate limiting
-
-## 🚀 Deployment
-
-### Development
-```bash
-python app.py
 ```
-
-### Production with Gunicorn
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
-
-### With Nginx (Reverse Proxy)
-Configure Nginx to proxy requests to Flask server on port 5000.
-
-## 🐛 Troubleshooting
-
-### Database Connection Error
-- Ensure MySQL is running
-- Verify credentials in `.env`
-- Check database exists: `mysql -u root -p -e "SHOW DATABASES;"`
-
-### Port Already in Use
-- Use different port: `app.run(port=5001)`
-- Or kill existing process: `lsof -i :5000 | grep LISTEN | awk '{print $2}' | xargs kill -9`
-
-### Module Not Found
-```bash
-pip install -r requirements.txt
-```
-
-### Model Training Fails
-- Ensure CSV data is valid
-- Check for sufficient rows (minimum ~50)
-- Verify feature columns exist
-- Check for missing values
-
-## 📊 Performance Metrics
-
-Each model training evaluates:
-
-**Classification**:
-- Accuracy
-- Precision
-- Recall
-- F1-Score
-
-**Regression**:
-- Mean Squared Error (MSE)
-- Root Mean Squared Error (RMSE)
-- Mean Absolute Error (MAE)
-- R² Score
-
 ## 🔄 Model Serialization
 
 Models are stored as:
@@ -306,28 +232,3 @@ The backend returns:
 2. Algorithm results
 3. Performance metrics
 4. Prediction endpoint URL
-
-## 📞 Support
-
-For detailed information:
-- Read [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for endpoint details
-- Check [SETUP_GUIDE.md](./SETUP_GUIDE.md) for installation help
-- Review [example_client.py](./example_client.py) for usage patterns
-- Check Flask logs for detailed error messages
-
-## 📜 License
-
-This is part of the ML Model Builder project.
-
-## 🎓 Learning Resources
-
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [Scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html)
-- [Pandas Documentation](https://pandas.pydata.org/docs/)
-- [MySQL Reference](https://dev.mysql.com/doc/)
-
----
-
-**Version**: 1.0.0  
-**Last Updated**: November 2025  
-**Status**: Production Ready ✅
